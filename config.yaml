@@ -1,5 +1,5 @@
 DATABASE:
-  HOST: "localhost"
+  HOST: "fepdb"
   PORT: "5432"
   USER: "postgres"
 PORT:

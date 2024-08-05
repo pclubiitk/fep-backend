@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  fepdb:
+    image: postgres
+    restart: always
+    container_name: fepdb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - ../pgdata/:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - 5432:5432
+
+  adminer:
+    depends_on:
+      - fepdb
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  backend:
+    depends_on:
+      - fepdb
+    restart: always
+    build: .
+    container_name: backend
+    ports:
+      - 8081:8081
+      - 8082:8082
+      - 8083:8083
+      - 8084:8084
+      - 25:25
