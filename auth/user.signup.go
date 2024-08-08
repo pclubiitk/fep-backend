@@ -5,13 +5,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pclubiitk/fep-backend/mail"
+	"github.com/pclubiitk/fep-backend/student"
 	"github.com/sirupsen/logrus"
 )
 
 type signUpRequest struct {
-	UserID   string `json:"user_id" binding:"required"` // roll or PF number
-	Password string `json:"password" binding:"required"`
-	UserOTP  string `json:"user_otp" binding:"required"`
+	UserID    string `json:"user_id" binding:"required"`
+	Name      string `json:"name" binding:"required"`
+	Password  string `json:"password" binding:"required"`
+	RollNo    string `json:"roll_no" binding:"required"`
+	UserOTP   string `json:"user_otp" binding:"required"`
+	RollNoOTP string `json:"roll_no_otp" binding:"required"`
 }
 
 func signUpHandler(mail_channel chan mail.Mail) gin.HandlerFunc {
@@ -29,6 +33,15 @@ func signUpHandler(mail_channel chan mail.Mail) gin.HandlerFunc {
 			return
 		}
 		if !verified {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid User OTP"})
+			return
+		}
+		verified, err = verifyOTP(ctx, signupReq.RollNo+"@iitk.ac.in", signupReq.RollNoOTP)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if !verified {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Roll No OTP"})
 			return
 		}
@@ -37,6 +50,7 @@ func signUpHandler(mail_channel chan mail.Mail) gin.HandlerFunc {
 
 		id, err := firstOrCreateUser(ctx, &User{
 			UserID:   signupReq.UserID,
+			Name:     signupReq.Name,
 			Password: hashedPwd,
 		})
 
@@ -44,7 +58,17 @@ func signUpHandler(mail_channel chan mail.Mail) gin.HandlerFunc {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		var createStudent = student.Student{
+			IITKEmail: signupReq.UserID,
+			Name:      signupReq.Name,
+			RollNo:    signupReq.RollNo,
+		}
+		err = student.FirstOrCreateStudent(ctx, &createStudent)
 
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		logrus.Infof("User %s created successfully with id %d", signupReq.UserID, id)
 		mail_channel <- mail.GenerateMail(signupReq.UserID, "Registered on Foreign Exposure Program portal", "Dear "+signupReq.UserID+",\n\nYou have been registered on Foreign Exposure Program Portal")
 		ctx.JSON(http.StatusOK, gin.H{"status": "Successfully signed up"})

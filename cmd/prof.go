@@ -13,7 +13,7 @@ func profServer() *http.Server {
 	PORT := viper.GetString("PORT.PROF")
 	engine := gin.New()
 	engine.Use(middleware.CORS())
-	// engine.Use(middleware.Authenticator())
+	engine.Use(middleware.Authenticator())
 	engine.Use(gin.Recovery())
 	engine.Use(gin.Logger())
 

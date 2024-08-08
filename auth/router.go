@@ -24,6 +24,8 @@ func Router(mail_channel chan mail.Mail, r *gin.Engine) {
 		auth.PUT("/admins/:userID/active", updateUserActiveStatus)
 		auth.POST("/reset-password", resetPasswordHandler(mail_channel))
 
+		auth.POST("/prof-signup", profSignUpHandler(mail_channel))
+
 		auth.POST("/god/signup", godSignUpHandler(mail_channel))
 		auth.POST("/god/login", godLoginHandler)
 		auth.POST("/god/reset-password", godResetPasswordHandler(mail_channel))

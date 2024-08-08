@@ -49,7 +49,7 @@ func GetProfName(ctx *gin.Context, id uint) (string, error) {
 }
 
 func FetchProfIDByEmail(ctx *gin.Context, email string) (uint, error) {
-	var hr Prof
-	tx := db.WithContext(ctx).Where("email = ?", email).First(&hr)
-	return hr.ID, tx.Error
+	var prof Prof
+	tx := db.WithContext(ctx).Where("professor_email_id = ?", email).First(&prof)
+	return prof.ID, tx.Error
 }
